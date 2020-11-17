@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <wiringPi.h>
 
 // Feedrate = mm per minute
 // Feedrate / 60 = mm per second
@@ -16,8 +17,12 @@
 // (Distance * 60) / TimePerRow = FeedRate
 // Simplified: 18000 / TimePerRow = FeedRate
 
-#define Feedrate   6000.0
-#define Distance 	  5.0
+#define Feedrate  6000.0
+#define FeedrateS 1000.0
+#define Distance 	 5.0
+#define RESOLUTION	  .5
+// used to counter acceleration time of CNC head
+#define ACCELTIME	20
 //! calculate this before hand to make sure timeperrow and timeperread are whole numbers !//
 const unsigned int TimePerRow  = (Distance / (Feedrate / 60.0)) * 1000.0;
 const unsigned int TimePerRead = (double)TimePerRow / (double)HEIGHTMAPSIZE;
@@ -37,21 +42,20 @@ Manager::Manager(JobExecuter* JE, Vec3<double> StartPos)
 {
 	this->JE = JE;
 	F.StartPos(StartPos);
-	F.SetFeedrate(6000);	// 100mm per second
+	F.SetFeedrate(Feedrate);	// 100mm per second
 	S.StartPosFrees(StartPos);
 	S.SetFrees(F);
 	// read data every 0.5mm: .05 second = 50milliseconds
 	// wait 1 second for sensor to be up and running
-	J = new Job(1000, TimePerRow, ControlCNC);
+	J = new Job(1000, TimePerRead + ACCELTIME, ControlCNC);
 	JE->AddJob(J);	// start job
-
 }
 
 Manager::~Manager()
 {
 }
 
-void Manager::StoreHeight(JobBase* thisjob){
+void Manager::StoreHeight(){
 	double distance = S.GetADCAverage();	// save distance now, this will remove stress on the heightmutex lock (GetDistance also had a mutex)
 	
 	HeightMutex.lock();
@@ -62,7 +66,6 @@ void Manager::StoreHeight(JobBase* thisjob){
 		columncounter += rowcounter % 2 ? 1 : -1;	// decrease columncounter if row was even, increase if it was odd.
 		rowcounter++;
 		rowfinished = true;
-		thisjob->KillJob(); // finished row
 	}
 	HeightMutex.unlock();
 }
@@ -87,26 +90,17 @@ void Manager::WriteHeightMapToFile(){
 }
 
 void Manager::ControlCNC(JobBase* thisjob){
-	// feedrate = 6000, so 3 seconds for a row
-	if(!rowfinished && RowJobID){
-		thisjob->SetInterval(TimePerRead); // check every TimePerRead seconds if row has finished scanning
-		std::cout << "had to wait" << std::endl;
-		return;	// row is still being scanned
+	StoreHeight();
+	// move head to next position
+	if(!columncounter ||!(HEIGHTMAPSIZE-1-columncounter)){
+		F.MoveHead({columncounter * RESOLUTION, rowcounter * RESOLUTION, 10});
+		delay(FeedrateS / 10 + ACCELTIME); // wait for Head to arrive at 10mm
 	}
-	else if(rowfinished && RowJobID){
-		thisjob->SetInterval(TimePerRow); // set interval back to 3s
-		F.MoveHead({rowcounter % 2 ? 0 : 300.0, 0, 10});
-		F.MoveHead({rowcounter % 2 ? 0 : 300.0, rowcounter * .5, 0});
-		rowfinished = false;
-	}
-	// check if area is scanned
+	F.MoveHead({columncounter * RESOLUTION, rowcounter * RESOLUTION, 0});
+	// check if entire area is scanned
 	if(rowcounter >= HEIGHTMAPSIZE){
 		thisjob->KillJob();
 		WriteHeightMapToFile();
 		return;
 	}
-	Job* heightjob = new Job(0, TimePerRead, StoreHeight);
-	JE->AddJob(heightjob);
-	RowJobID = heightjob->GetJobID();
-	F.MoveHead({rowcounter % 2 ? 300.0 : 0, 0, 0}); // this will take 3 seconds, move head to opposite direction
 }

@@ -28,7 +28,7 @@ public:
 	Manager(JobExecuter* JE, Vec3<double> StartPos);
 	~Manager();
 
-	static void StoreHeight(JobBase* thisjob);
+	static void StoreHeight();
 	static void ControlCNC(JobBase* thisjob);
 	static void WriteHeightMapToFile();
 };
