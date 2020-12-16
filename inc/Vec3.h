@@ -78,7 +78,7 @@ public:
 	}
 
     T Z() const{
-		return y;
+		return z;
 	}
 
 	void Z(T val){

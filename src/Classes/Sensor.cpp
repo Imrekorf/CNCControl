@@ -1,5 +1,6 @@
 #include "Sensor.h"
 
+#include "ads1015/Adafruit_ADS1015.h"
 #include <unistd.h>
 
 double Sensor::ADCValue = 0.0;

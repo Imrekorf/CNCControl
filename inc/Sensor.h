@@ -6,12 +6,10 @@
 
 #include "Frees.h"
 
-#include "ads1015/Adafruit_ADS1015.h"
-
 #define SENSORPIN A0
 
-#define MaxLengthDiff   41.36
-#define PotAtRest       27.00
+#define MaxLengthDiff   32.72
+#define PotAtRest      355.00
 #define PotAtFull     1645.00
 #define MaxPotDiff    (PotAtFull-PotAtRest)   // 773 @ full 219 @ rest => 773-219 = 554
 
