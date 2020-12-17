@@ -2,8 +2,8 @@
 #include <iostream>
 #include <fstream>
 
-#include "Manager.h"
-#include "JobExecuter.h"
+#include "Sensor.h"
+#include "Vec3.h"
 
 #define DistanceBetweenPointsmm	30
 #define	DistanceBetweenLinesmm	30
@@ -38,6 +38,32 @@ void SendGCode(std::string gcode){
 	std::cin.get();
 }
 
+void WriteHeightMapToFile(double** Matrix, int ScanLines, int PointsPerLine){
+	// write data to file and free heightmapmatrix memory
+	for(int i = 0; i < ScanLines; i++){
+		for(int j = 0; j < PointsPerLine; j++){
+			HeightMap << Matrix[i][j] << " ";
+		}
+		HeightMap << std::endl;
+		delete Matrix[i];
+	}
+	delete Matrix;
+}
+
+// get difference based relative to leveledheight and adds that difference to relativeheight. Store Relativeheight to heightmapmatrix.
+double GetSensorDiff(Sensor &S, double LeveledHeight, double &RelativeHeight, double &HeightMapMatrix){
+	double SensorValueDiff = S.GetDistance() - LeveledHeight;	// get difference based to leveled height
+	std::cout << "SensorDiff: " << SensorValueDiff << std::endl;
+	// clear interference
+	// only note height difference if it is bigger than 0.1
+	if(fabs(SensorValueDiff) > 0.1){
+		RelativeHeight += SensorValueDiff;
+	}
+	// Store RelativeHeight
+	HeightMapMatrix = RelativeHeight;
+	return SensorValueDiff;
+}
+
 
 int main(int argc, char** argv)
 {	
@@ -50,11 +76,7 @@ int main(int argc, char** argv)
   	{ 
   	  std::cout << "error opening temp.tap or Heightmap.dat" << std::endl; 
   	  return 1; 
-  	} 
-
-	//S.StartPosFrees({0, 0, 0});
-	//Frees F({0, 0, 0});
-	//S.SetFrees(F);
+  	}
 
 	// make sure wiringPi and objects are instantiated
 	delay(15);
@@ -94,7 +116,7 @@ int main(int argc, char** argv)
 
 	// create heightmap matrix
 	double** HeightMapMatrix = new double*[ScanLines];
-	for(int j = 0; j < PointsPerLine; j++){
+	for(int j = 0; j < ScanLines; j++){
 		HeightMapMatrix[j] = new double[PointsPerLine];
 	}
 
@@ -104,51 +126,25 @@ int main(int argc, char** argv)
 		int j = i % 2 ? PointsPerLine-1 : 0;
 		int increase = i % 2 ? -1 : 1;
 
+		for(;i % 2 ? j > 0 : j < PointsPerLine - 1; j += increase){
+			// get Height Difference and store that to HeightMapMatrix
+			double SensorValueDiff = GetSensorDiff(S, LeveledHeight, RelativeHeight, HeightMapMatrix[i][j]);
 
-
-		for(;i % 2 ? j >= 0 : j < PointsPerLine; j += increase){
-			// tell user to input GCode
-			if(i % 2 ? j != PointsPerLine-1 : j != 0){
-				MoveTo(Vec3<double>(increase * DistanceBetweenPointsmm, 0, 0));
-			}
-
-			// get new height value
-			SensorValue = S.GetDistance();
-			double SensorValueDiff = SensorValue - LeveledHeight;	// get difference based to leveled height
-			std::cout << "SensorDiff: " << SensorValueDiff << std::endl;
-			// clear interference
-			// only note height difference if it is bigger than 0.1
-			if(fabs(SensorValueDiff) > 0.1){
-				RelativeHeight += SensorValueDiff;
-
-				// Move Z back to LeveledHeight
-				MoveTo(Vec3<double>(0, 0, SensorValueDiff));
-			}
-			// Keep track of how much it has moved relative to position 0
-			// Store RelativeHeight
-			HeightMapMatrix[i][j] = RelativeHeight;
-			//HeightMap << RelativeHeight << " ";
+			// move sensorHead
+			MoveTo(Vec3<double>(increase * DistanceBetweenPointsmm, 0, SensorValueDiff));
 		}
-		//HeightMap << std::endl;
+		// currently at last point
+		double SensorValueDiff = GetSensorDiff(S, LeveledHeight, RelativeHeight, HeightMapMatrix[i][j]);
 
+		// move up, to the side and down
 		MoveTo(Vec3<double>(0, 0, StartingHeightFromFreesTop - RelativeHeight));
 		MoveTo(Vec3<double>(0, DistanceBetweenLinesmm, 0));
 		if(i+1 < ScanLines){
 			MoveTo(Vec3<double>(0, 0, -(StartingHeightFromFreesTop - RelativeHeight)));
 		}
-		//MoveTo(Vec3<double>(j * DistanceBetweenPointsmm, (i - 1) * DistanceBetweenLinesmm, 16));
-
 	}
 	
-	// write data to file and free heightmapmatrix memory
-	for(int i = 0; i < ScanLines; i++){
-		for(int j = 0; j < PointsPerLine; j++){
-			HeightMap << HeightMapMatrix[i][j] << " ";
-		}
-		HeightMap << std::endl;
-		delete HeightMapMatrix[i];
-	}
-	delete HeightMapMatrix;
+	WriteHeightMapToFile(HeightMapMatrix, ScanLines, PointsPerLine);
 
 	file1.close();
 	HeightMap.close();

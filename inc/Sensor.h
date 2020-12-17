@@ -4,8 +4,6 @@
 #include <mutex>
 #include <memory>
 
-#include "Frees.h"
-
 #define SENSORPIN A0
 
 #define MaxLengthDiff   32.72
@@ -16,10 +14,7 @@
 class Sensor
 {
 private:   
-    // TODO: 
-    const double SensorLevel = 5.0;
-    Vec3<double> StartPos;
-    const Vec3<double> Offset = {2, 2, 0};    
+    const double SensorLevel = 15.0; 
     const float ADC2DIST_Fact = MaxLengthDiff / MaxPotDiff;
     
     // static so that ADCreadThread can access after deconstructor
@@ -27,17 +22,9 @@ private:
     static std::mutex ADCmutex;
     static void ADCreadThread();
 
-protected: 
-    Frees frees;
-
 public:    
-    Sensor(Vec3<double> StartPos);
-    Sensor(Vec3<double> StartPosFrees, Frees &F);
     Sensor();
     ~Sensor();
-
-    void StartPosFrees(Vec3<double> StartPosFrees);
-    void SetFrees(Frees &F);
 
     double GetDistance();
     double GetADCAverage();
