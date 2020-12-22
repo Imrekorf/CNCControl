@@ -23,9 +23,9 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-
-	Sensor S;
-	Frees F({0, 0, 0});
+	ADCMaster ADCreader;
+	//Sensor S;
+	Frees F({0, 0, 0}, &ADCreader);
 	Heightmap heightmap(ScanLines, PointsPerLine);
 
 	// make sure wiringPi and objects are instantiated
@@ -36,7 +36,7 @@ int main(int argc, char** argv)
 	while(true){
 		F.MoveTo({0, 0, 0});
 		std::cout << "new command" << std::endl;
-		F.MoveTo({50, 50, 0});
+		F.MoveTo({0, 20, 0});
 	}
 
 

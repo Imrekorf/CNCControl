@@ -1,10 +1,8 @@
 #pragma once
 
-#include <thread>
-#include <mutex>
-#include <memory>
 #include <iostream>
 
+#include "ADCmanager.h"
 #include "Frees.h"
 
 #define SENSORPIN A0
@@ -24,13 +22,12 @@ private:
     double StartingHeightFromFreesTop = 0;
     double RelativeHeight = 0;
     
-    // static so that ADCreadThread can access after deconstructor
-    static double ADCValue;
-    static std::mutex ADCmutex;
-    static void ADCreadThread();
+    ADCMaster* ADCreader;
+    const unsigned int ADCChannel = 1;
+
 
 public:    
-    Sensor();
+    Sensor(ADCMaster* ADCreader);
     ~Sensor();
 
     double GetDistance();
@@ -39,4 +36,5 @@ public:
     void LevelSensor(Frees& F);
     double GetSensorDifference();
     double MeasureHeight(double& difference);
+
 };

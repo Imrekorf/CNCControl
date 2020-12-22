@@ -2,13 +2,10 @@
 #include <wiringSerial.h>
 #include <wiringPi.h>
 
-#include "ads1015/Adafruit_ADS1015.h"
-#include <unistd.h>
+#define CNCStoppedValue 59
 
-double Frees::ADCValue = 0.0;
-std::mutex Frees::ADCmutex;
 
-Frees::Frees(Vec3<double> Position)
+Frees::Frees(Vec3<double> Position, ADCMaster* ADCreader) : ADCreader(ADCreader)  //(1, &Frees::ADCValueProcessor, this)
 {
 	position = Position;
 	GcodeTracker.open("Gcode.tap");
@@ -21,48 +18,29 @@ Frees::Frees(Vec3<double> Position)
 	}
 
 	WaitForGRBLResponse();
-
-	std::thread ReadADC(ADCreadThread);
-	ReadADC.detach();
 }
 
 Frees::~Frees()
 {
 	GcodeTracker.close();
 	serialClose(SerialID);
-
-	ADCmutex.lock();
-	ADCValue = -1.0;
-	std::cout << "Frees destroyed" << std::endl;
-	ADCmutex.unlock();
 }
 
-
-void Frees::ADCreadThread(){
-	Adafruit_ADS1015 ads;
-	uint16_t adc0;
-
-	ads.setGain(GAIN_ONE);
-	ads.begin();
-	
-	//average = ads.readADC_SingleEnded(1); // read A0 once to set average
-	while(ADCValue != -1.0){
-		adc0 = ads.readADC_SingleEnded(1);  // read A0
-		//average = (adc0 + average)/2;
-		ADCmutex.lock();
-		if(ADCValue != -1.0){
-			// update ADCmutex
-			ADCValue = adc0;
-			ADCmutex.unlock();
-			usleep(5000);
-		}
-		else{
-			// exit thread
-			ADCmutex.unlock();
-		}
-	}
-
-	std::cout << "Frees Thread destroyed" << std::endl;
+void Frees::CheckCNCMoving(){
+	double ADCValue = ADCreader->GetADCValue(ADCChannel);
+	static unsigned int CNCStopChecks = 0;
+    if(ADCValue > CNCStoppedValue){
+        // reset values to 0
+        CNCmoving = 1.0;
+        CNCStopChecks = 0;
+		//std::cout << ADCValue << std::endl;
+    }
+    else
+        CNCStopChecks++;
+    if(CNCStopChecks > 2){
+        // CNC stopped for more than 10ms
+        CNCmoving = 0.0;
+    }
 }
 
 void Frees::WaitForGRBLResponse(){
@@ -92,40 +70,17 @@ void Frees::SendGCode(std::string gcode){
 	WaitForGRBLResponse();
 
 	// wait for CNC to start moving
-	delay(500);
-
+	delay(200);
 	do{
-		ADCmutex.lock();
-		double value = ADCValue;
-		ADCmutex.unlock();
-		if(value > 59){
-			//std::cout << "checking for 50ms" << std::endl;
-			int i = 0;
-			for(; i < 1000; i++){
-				usleep(10);
-				ADCmutex.lock();
-				double value = ADCValue;
-				ADCmutex.unlock();
-				if(value > 59){
-					// still moving
-					//std::cout << "still moving" << std::endl;
-					break;
-				}
-			}
-			if(i > 999){
-				// not moving for 50ms = stopped
-				break;
-			}
-		}
-		else{
-			//std::cout << "CNC moving" << std::endl;
-		}
+		CheckCNCMoving();
+		delay(5);
 	}
-	while(true);
+	while(CNCmoving);
 	std::cout << "CNC stopped" << std::endl;
 
-	char x;
-	std::cin >> x;
+	delay(100); // be sure that the CNC is able to catch up to the next command
+	//char x;
+	//std::cin >> x;
 }
 
 void Frees::_Move(Vec3<double> V){

@@ -1,12 +1,11 @@
 #pragma once
 
-#include <thread>
-#include <mutex>
-#include <memory>
 #include <string>
 #include <iostream>
 #include <fstream>
 #include "Vec3.h"
+
+#include "ADCmanager.h"
 
 class Frees
 {
@@ -22,12 +21,13 @@ private:
 	void _Move(Vec3<double> V);
 	void WaitForGRBLResponse();
 
-	static double ADCValue;
-    static std::mutex ADCmutex;
-	static void ADCreadThread();
+	ADCMaster* ADCreader;
+	const unsigned int ADCChannel = 0;
+	bool CNCmoving = false;
+	void CheckCNCMoving();
 
 public:
-	Frees(Vec3<double> Position);
+	Frees(Vec3<double> Position, ADCMaster* ADCreader);
 	~Frees();
 
 	void Move(Vec3<double> V);
