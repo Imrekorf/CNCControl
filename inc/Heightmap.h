@@ -4,6 +4,14 @@
 #include <iostream>
 #include <fstream>
 
+#define Resolution .5
+
+#define DistanceBetweenPointsmm	30.0
+#define	DistanceBetweenLinesmm	30.0
+#define ScanHeightmm			90.0
+#define ScanWidthmm				90.0
+
+
 class Heightmap
 {
 public:
@@ -23,24 +31,24 @@ public:
 						return output;
 					}
 
-					friend std::ostream& operator<<(std::ostream& output, const HeightMapValueProxy &D){
-						output << D.value;
-						return output;
+					double operator-(const HeightMapValueProxy& HMVP){
+						return this->value - HMVP.value;
+					}
+					double operator-(const double& v){
+						return this->value - v;
 					}
 
-					type get(){
-						return value;
-					}
+					operator double() const { return value; }
 			};
 
 			HeightMapArrayProxy(HeightMapValueProxy* _array) : _array(_array) { }
 
 			HeightMapValueProxy& operator[](unsigned int index) {
-				return &_array[index];
+				return _array[index];
 			}
 		
 		private:
-			type* _array;
+			HeightMapValueProxy* _array;
 	};
 
 	HeightMapArrayProxy<double> operator[](unsigned int index) {
@@ -57,39 +65,3 @@ public:
 		unsigned int height, width;
 
 };
-
-Heightmap::Heightmap(unsigned int height, unsigned int width)
-{
-	this->height = height;
-	this->width = width;
-	matrix = new HeightMapArrayProxy<double>::HeightMapValueProxy*[height];
-	for(int j = 0; j < height; j++){
-		matrix[j] = new HeightMapArrayProxy<double>::HeightMapValueProxy[width];
-	}
-}
-
-Heightmap::~Heightmap()
-{
-	for(int j = 0; j < height; j++){
-		delete matrix[j];
-	}
-	delete matrix;
-}
-
-void Heightmap::WriteHeightMap(std::string filename){
-	std::ofstream HeightMap;
-	HeightMap.open(filename);
-
-	if (!HeightMap.is_open()) 
-  	{ 
-  	  std::cout << "error opening " << filename << std::endl; 
-  	}
-
-	// write data to file and free heightmapmatrix memory
-	for(int i = 0; i < height; i++){
-		for(int j = 0; j < width; j++){
-			HeightMap << matrix[i][j] << " ";
-		}
-		HeightMap << std::endl;
-	}
-}

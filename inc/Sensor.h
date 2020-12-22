@@ -3,6 +3,9 @@
 #include <thread>
 #include <mutex>
 #include <memory>
+#include <iostream>
+
+#include "Frees.h"
 
 #define SENSORPIN A0
 
@@ -10,12 +13,16 @@
 #define PotAtRest      355.00
 #define PotAtFull     1645.00
 #define MaxPotDiff    (PotAtFull-PotAtRest)   // 773 @ full 219 @ rest => 773-219 = 554
+#define SensorMiddle    15.00
 
 class Sensor
 {
 private:   
-    const double SensorLevel = 15.0; 
+    const double SensorLevelAim = 15.0; 
     const float ADC2DIST_Fact = MaxLengthDiff / MaxPotDiff;
+    double SensorLeveledHeight;
+    double StartingHeightFromFreesTop = 0;
+    double RelativeHeight = 0;
     
     // static so that ADCreadThread can access after deconstructor
     static double ADCValue;
@@ -28,4 +35,8 @@ public:
 
     double GetDistance();
     double GetADCAverage();
+
+    void LevelSensor(Frees& F);
+    double GetSensorDifference();
+    double MeasureHeight(double& difference);
 };

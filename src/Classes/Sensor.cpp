@@ -6,16 +6,6 @@
 double Sensor::ADCValue = 0.0;
 std::mutex Sensor::ADCmutex;
 
-Sensor::Sensor(Vec3<double> StartPos) : StartPos(StartPos), frees(StartPos - Offset) {
-	std::thread ReadADC(ADCreadThread);
-	ReadADC.detach();
-}
-
-Sensor::Sensor(Vec3<double> StartPosFrees, Frees &F) : StartPos(StartPosFrees + Offset), frees(F) {
-	std::thread ReadADC(ADCreadThread);
-	ReadADC.detach();
-}
-
 Sensor::Sensor() {
 	std::thread ReadADC(ADCreadThread);
 	ReadADC.detach();
@@ -26,13 +16,6 @@ Sensor::~Sensor() {
 	ADCValue = -1.0;
 	std::cout << "sensor destroyed" << std::endl;
 	ADCmutex.unlock();
-}
-
-void Sensor::StartPosFrees(Vec3<double> StartPosFrees){
-	this->StartPos = StartPosFrees + Offset;
-}
-void Sensor::SetFrees(Frees &F){
-	this->frees = F;
 }
 
 void Sensor::ADCreadThread(){
@@ -60,7 +43,7 @@ void Sensor::ADCreadThread(){
 		}
 	}
 
-	std::cout << "Thread destroyed" << std::endl;
+	std::cout << "Sensor Thread destroyed" << std::endl;
 }
 
 double Sensor::GetDistance(){
@@ -78,4 +61,41 @@ double Sensor::GetADCAverage(){
 		ADCAverage = ADCValue;
 		ADCmutex.unlock();
 	return ADCAverage;
+}
+
+void Sensor::LevelSensor(Frees& F){
+	double SensorValue;
+	do{
+		F.Move({0, 0, -SensorMiddle});
+		SensorValue = GetDistance();
+		//std::cout << "PushedIn: " << SensorValue << std::endl;
+		StartingHeightFromFreesTop += SensorMiddle;
+	}
+	while(SensorValue < 2);
+
+	// move sensor head down to SensorLevelAim value
+	F.Move({0, 0, -1 * (SensorLevelAim - SensorValue)});
+	StartingHeightFromFreesTop += SensorLevelAim - SensorValue;
+
+	// debugging
+	//std::cout << "HeightToTop: " << StartingHeightFromFreesTop << std::endl;
+	SensorLeveledHeight = GetDistance();
+}
+
+double Sensor::GetSensorDifference(){
+	return GetDistance() - SensorLeveledHeight;
+}
+
+double Sensor::MeasureHeight(double& difference){
+	double Diff = GetSensorDifference();
+	// only write significant changes to heightmap
+	if(fabs(Diff) > 0.1){
+		// std::cout << "Difference: " << Diff << std::endl;
+		RelativeHeight += Diff;
+		difference = Diff;
+	}
+	else{
+		difference = 0;
+	}
+	return RelativeHeight;
 }
