@@ -1,4 +1,5 @@
 #include "ADCmanager.h"
+#include <wiringPi.h>
 
 double ADCMaster::ADCValue[4];
 std::mutex ADCMaster::ADCmutex;
@@ -23,10 +24,13 @@ void ADCMaster::ADCreadThread(){
 	ads.setGain(GAIN_ONE);
 	ads.begin();
 
-    ADCAverage = ads.readADC_SingleEnded(0);
+    ADCAverage = ads.readADC_SingleEnded(1);
 	while(ADCValue[0] != -1.0){
 		adc0 = ads.readADC_SingleEnded(0);  // read A0
+		delay(5);
 		ADCAverage = (ads.readADC_SingleEnded(1) + ADCAverage) / 2;  // read A1
+		std::cout << adc0 << " " << ADCAverage << std::endl;
+
 		//adc2 = ads.readADC_SingleEnded(2);  // read A2
 		//adc3 = ads.readADC_SingleEnded(3);  // read A3
 		ADCmutex.lock();

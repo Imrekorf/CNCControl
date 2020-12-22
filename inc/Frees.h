@@ -34,6 +34,7 @@ public:
 	void MoveTo(Vec3<double> P);
 
 	void SendGCode(std::string Gcode);
+	void GiveHumanGcode(std::string Gcode);
 
 	const Vec3<double> GetPosition();
 };

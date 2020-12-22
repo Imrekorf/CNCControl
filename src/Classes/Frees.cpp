@@ -2,7 +2,7 @@
 #include <wiringSerial.h>
 #include <wiringPi.h>
 
-#define CNCStoppedValue 59
+#define CNCStoppedValue 60
 
 
 Frees::Frees(Vec3<double> Position, ADCMaster* ADCreader) : ADCreader(ADCreader)  //(1, &Frees::ADCValueProcessor, this)
@@ -16,7 +16,7 @@ Frees::Frees(Vec3<double> Position, ADCMaster* ADCreader) : ADCreader(ADCreader)
 	if((SerialID = serialOpen("/dev/ttyUSB0", 115200)) < 0){
 		static_assert(true, "Unable to open ttyUSB0");
 	}
-
+	delay(500);
 	WaitForGRBLResponse();
 }
 
@@ -26,6 +26,7 @@ Frees::~Frees()
 	serialClose(SerialID);
 }
 
+// electonic && Serial logic
 void Frees::CheckCNCMoving(){
 	double ADCValue = ADCreader->GetADCValue(ADCChannel);
 	static unsigned int CNCStopChecks = 0;
@@ -37,7 +38,7 @@ void Frees::CheckCNCMoving(){
     }
     else
         CNCStopChecks++;
-    if(CNCStopChecks > 2){
+    if(CNCStopChecks > 10){
         // CNC stopped for more than 10ms
         CNCmoving = 0.0;
     }
@@ -58,7 +59,7 @@ void Frees::WaitForGRBLResponse(){
 	while(CharactersInSerialStream == 0);
 }
 
-
+// Gcode Senders
 void Frees::SendGCode(std::string gcode){
 	GcodeTracker << gcode << std::endl;
 	// temporary untill we can send gcode to CNC
@@ -76,13 +77,19 @@ void Frees::SendGCode(std::string gcode){
 		delay(5);
 	}
 	while(CNCmoving);
-	std::cout << "CNC stopped" << std::endl;
 
 	delay(100); // be sure that the CNC is able to catch up to the next command
-	//char x;
-	//std::cin >> x;
+	// char x;
+	// std::cin >> x;
 }
 
+void Frees::GiveHumanGcode(std::string gcode){
+	GcodeTracker << gcode << std::endl;
+	std::cout << "Gcode: " << gcode << std::endl << "Finished? "; 
+	std::cin.get();
+}
+
+// Instruction Parsers
 void Frees::_Move(Vec3<double> V){
 	std::string Gcode;
 	Gcode += "G1";

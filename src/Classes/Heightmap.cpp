@@ -24,11 +24,6 @@ Heightmap::Heightmap(unsigned int height, unsigned int width)
 	for(unsigned int j = 0; j < height; j++){
 		matrix[j] = new HeightMapArrayProxy<double>::HeightMapValueProxy[width];
 	}
-
-	matrix[0][0] = 0;		 matrix[0][1] = 2.58738; matrix[0][2] = 5.19097; matrix[0][3] = 7.82596;
-	matrix[1][0] = 0.129456; matrix[1][1] = 2.71583; matrix[1][2] = 5.33543; matrix[1][3] = 7.82596;
-	matrix[2][0] = 0.129456; matrix[2][1] = 2.72131; matrix[2][2] = 5.33440; matrix[2][3] = 7.97176;
-	matrix[3][0] = 0.265017; matrix[3][1] = 2.87979; matrix[3][2] = 5.47966; matrix[3][3] = 7.97176;
 }
 
 Heightmap::~Heightmap()

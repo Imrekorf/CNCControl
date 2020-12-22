@@ -8,8 +8,8 @@
 #define SENSORPIN A0
 
 #define MaxLengthDiff   32.72
-#define PotAtRest      355.00
-#define PotAtFull     1645.00
+#define PotAtRest      500.00
+#define PotAtFull     2047.00
 #define MaxPotDiff    (PotAtFull-PotAtRest)   // 773 @ full 219 @ rest => 773-219 = 554
 #define SensorMiddle    15.00
 

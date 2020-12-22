@@ -23,25 +23,30 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
+	std::ofstream Tracker;
+	Tracker.open("HeightTracker.dat");
+	if(!Tracker.is_open())
+		static_assert(true, "unable to open HeightTracker.dat");
+
 	ADCMaster ADCreader;
-	//Sensor S;
+
+	Sensor S(&ADCreader);
 	Frees F({0, 0, 0}, &ADCreader);
 	Heightmap heightmap(ScanLines, PointsPerLine);
 
 	// make sure wiringPi and objects are instantiated
 	delay(15);
-	
-	F.SendGCode("F500");
+
+	F.SendGCode("F800");
 
 	while(true){
-		F.MoveTo({0, 0, 0});
-		std::cout << "new command" << std::endl;
-		F.MoveTo({0, 20, 0});
+		F.Move({0, -20, 0});
+		std::cout << "\n\n\n\n\n\n" << std::endl;
+		F.Move({0, 20, 0});
+		std::cout << "\n\n\n\n\n\n" << std::endl;
 	}
 
 
-
-	/*
 	S.LevelSensor(F);
 
 	// scan Area
@@ -52,7 +57,9 @@ int main(int argc, char** argv)
 		double SensorValueDiff = 0;
 		for(;i % 2 ? j > 0 : j < PointsPerLine - 1; j += increase){
 			// measure the height and store to heightmap
+			
 			heightmap[i][j] = S.MeasureHeight(SensorValueDiff);
+			Tracker << heightmap[i][j];
 
 			// move sensor head
 			F.Move({0, (double)increase * DistanceBetweenPointsmm, SensorValueDiff});
@@ -60,6 +67,8 @@ int main(int argc, char** argv)
 		// currently at last point of line
 		// std::cout << "finishing line: " << std::endl;
 		heightmap[i][j] = S.MeasureHeight(SensorValueDiff);
+		Tracker << heightmap[i][j];
+		Tracker << std::endl;
 
 		// move up, to the side and down ( if there is a next line)
 		double Zheight = F.GetPosition().Z();
@@ -69,12 +78,12 @@ int main(int argc, char** argv)
 			F.Move({0, 0, Zheight + SensorValueDiff});
 		}
 	}
-	*/
 
 	heightmap.WriteHeightMap("HeightmapTest.dat");
 
 	std::cout << "job's done" << std::endl;
 
+	Tracker.close();
 
 	return 0;
 }
