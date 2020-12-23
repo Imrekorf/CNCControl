@@ -1,11 +1,13 @@
 #include "Heightmap.h"
 #include "Vec3.h"
 
-struct Line{
+// Datatype die een lijn representeerd
+struct Lijn{
 	double RC;
 	double B;
 
-	Line(Vec3<double> P1, Vec3<double> P2){
+	// bereken lijn tussen twee punten.
+	Lijn(Vec3<double> P1, Vec3<double> P2){
 		RC = (P2.Y() - P1.Y()) / (P2.X() - P1.X());
 		B = P1.Y() - (RC * P1.X());
 	}
@@ -16,25 +18,28 @@ struct Line{
 };
 
 
-Heightmap::Heightmap(unsigned int height, unsigned int width)
+Hoogtemap::Hoogtemap(unsigned int hoogte, unsigned int breedte)
 {
-	this->height = height;
-	this->width = width;
-	matrix = new HeightMapArrayProxy<double>::HeightMapValueProxy*[height];
-	for(unsigned int j = 0; j < height; j++){
-		matrix[j] = new HeightMapArrayProxy<double>::HeightMapValueProxy[width];
+	this->hoogte = hoogte;
+	this->breedte = breedte;
+	// Maak de matrix aan die de waarde van de hoogtemap bijhoudt aan.
+	matrix = new HoogtemapArrayProxy<double>::HoogtemapValueProxy*[hoogte];
+	for(unsigned int j = 0; j < hoogte; j++){
+		matrix[j] = new HoogtemapArrayProxy<double>::HoogtemapValueProxy[breedte];
 	}
 }
 
-Heightmap::~Heightmap()
-{
-	for(unsigned int j = 0; j < height; j++){
+Hoogtemap::~Hoogtemap()
+{	
+	// zet het gebruikte geheugen vrij.
+	for(unsigned int j = 0; j < hoogte; j++){
 		delete matrix[j];
 	}
 	delete matrix;
 }
 
-void Heightmap::WriteHeightMap(std::string filename){
+void Hoogtemap::SlaHoogtemapOp(std::string filename){
+	// open een filestream voor de hoogtemap.
 	std::ofstream HeightMap;
 	HeightMap.open(filename);
 
@@ -44,46 +49,50 @@ void Heightmap::WriteHeightMap(std::string filename){
 		return;
   	}
 
-	double** HeightMatrixTemp = new double*[(int)(ScanHeightmm/Resolution)];
-	for(unsigned int i = 0; i < ScanHeightmm/Resolution; i++){
-		HeightMatrixTemp[i] = new double[(int)(ScanWidthmm/Resolution)];
+	double** HoogtemapMatrixVerGroot = new double*[(int)(ScanHoogtemm/ScanResolutie)];
+	for(unsigned int i = 0; i < ScanHoogtemm/ScanResolutie; i++){
+		HoogtemapMatrixVerGroot[i] = new double[(int)(ScanBreedtemm/ScanResolutie)];
 	}
 	
 	// write data to file and free heightmapmatrix memory
-	for(unsigned int i = 0; i < height-1; i++){
-		for(unsigned int j = 0; j < width-1; j++){
-			Line HL(
-				{DistanceBetweenLinesmm*i, matrix[i][j], 0}, 
-				{DistanceBetweenLinesmm*(i+1), matrix[i+1][j], 0}
+	for(unsigned int i = 0; i < hoogte-1; i++){
+		for(unsigned int j = 0; j < breedte-1; j++){
+			// Verticaal Links
+			Lijn HL(
+				{AfstandTussenLijnenmm*i, matrix[i][j], 0}, 
+				{AfstandTussenLijnenmm*(i+1), matrix[i+1][j], 0}
 			);
-			Line HR(
-				{DistanceBetweenLinesmm*i, matrix[i][j+1], 0}, 
-				{DistanceBetweenLinesmm*(i+1), matrix[i+1][j+1], 0}
+			// Verticaal Rechts
+			Lijn HR(
+				{AfstandTussenLijnenmm*i, matrix[i][j+1], 0}, 
+				{AfstandTussenLijnenmm*(i+1), matrix[i+1][j+1], 0}
 			);
-			for(double k = 0; k < DistanceBetweenLinesmm; k+=Resolution){
-				Line W(
-					{DistanceBetweenPointsmm*j, HL.F(k + i * DistanceBetweenLinesmm), 0}, 
-					{DistanceBetweenPointsmm*(j+1), HR.F(k + i * DistanceBetweenLinesmm), 0}
+			// maak een lijn tussen Verticaal Links en Verticaal. 
+			for(double k = 0; k < AfstandTussenLijnenmm; k+=ScanResolutie){
+				Lijn W(
+					{AfstandTussenPuntenmm*j, HL.F(k + i * AfstandTussenLijnenmm), 0}, 
+					{AfstandTussenPuntenmm*(j+1), HR.F(k + i * AfstandTussenLijnenmm), 0}
 				);
-				
-				for(double l = 0; l < DistanceBetweenPointsmm; l+=Resolution){
-					unsigned int i_height = i*(DistanceBetweenLinesmm/Resolution) + (k/Resolution);
-					unsigned int i_width = j*(DistanceBetweenLinesmm/Resolution) + (l/Resolution);
-					HeightMatrixTemp[i_height][i_width] = W.F(l + j * DistanceBetweenLinesmm);
+				// bereken de punten over de horizontale lijn.
+				for(double l = 0; l < AfstandTussenPuntenmm; l+=ScanResolutie){
+					unsigned int i_height = i*(AfstandTussenLijnenmm/ScanResolutie) + (k/ScanResolutie);
+					unsigned int i_width = j*(AfstandTussenLijnenmm/ScanResolutie) + (l/ScanResolutie);
+					HoogtemapMatrixVerGroot[i_height][i_width] = W.F(l + j * AfstandTussenLijnenmm);
 				}
 			}
 		}
 	}
 
-	
-	for(unsigned int i = 0; i < ScanHeightmm/Resolution; i++){
-		for(unsigned int j = 0; j < ScanWidthmm/Resolution; j++){
-			HeightMap << HeightMatrixTemp[i][j] << " ";
+	// schrijf de berekende waardes naar het bestand en verwijder vervolgens die regel in de matrix.
+	for(unsigned int i = 0; i < ScanHoogtemm/ScanResolutie; i++){
+		for(unsigned int j = 0; j < ScanBreedtemm/ScanResolutie; j++){
+			HeightMap << HoogtemapMatrixVerGroot[i][j] << " ";
 		}
-		delete HeightMatrixTemp[i];
+		delete HoogtemapMatrixVerGroot[i];
 		HeightMap << std::endl;
 	}
-	delete HeightMatrixTemp;
+	delete HoogtemapMatrixVerGroot;
 
+	// sluit de filestream
 	HeightMap.close();
 }

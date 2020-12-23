@@ -10,31 +10,39 @@
 class Frees
 {
 private:
-	Vec3<double> position;
+	Vec3<double> Pos;
 
+	// file stream om de gebruikte Gcode bij te houden.
 	std::ofstream GcodeTracker;
 
-	bool Relative = 0;
+	// houdt bij of de frees in relatieve of absolute modus is.
+	bool Relatief = 0;
 
+	// De ID gebruikt om met de CNC Frees te kunnen communiceren.
 	int SerialID;
 
-	void _Move(Vec3<double> V);
-	void WaitForGRBLResponse();
+	// Verwerkt een Vec3 naar Gcode
+	void _Beweeg(Vec3<double> V);
+	// Wacht totdat de CNC frees een reactie op het vorige commando heeft gegeven.
+	void WachtOpGRBLReactie();
 
-	ADCMaster* ADCreader;
+	ADCMaster* ADClezer;
 	const unsigned int ADCChannel = 0;
-	bool CNCmoving = false;
-	void CheckCNCMoving();
+	bool CNCbeweegt = false;
+	// Leest de ADS1015 uit om vast te stellen of de CNC beweegt of stilstaat.
+	void LeesStepperMotors();
 
 public:
-	Frees(Vec3<double> Position, ADCMaster* ADCreader);
+	Frees(Vec3<double> Positie, ADCMaster* ADClezer);
 	~Frees();
 
-	void Move(Vec3<double> V);
-	void MoveTo(Vec3<double> P);
+	// Besturen de CNC op basis van Vectoren
+	void Beweeg(Vec3<double> V);
+	void BeweegNaar(Vec3<double> P);
 
-	void SendGCode(std::string Gcode);
-	void GiveHumanGcode(std::string Gcode);
+	// Stuurt Gcode naar de Frees, Verlaat de functie pas wanneer Frees stilstaat.
+	void StuurGCode(std::string Gcode);
 
-	const Vec3<double> GetPosition();
+	// Geeft de huidige berekende positie van de frees terug.
+	const Vec3<double> Positie();
 };

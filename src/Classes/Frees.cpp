@@ -2,22 +2,28 @@
 #include <wiringSerial.h>
 #include <wiringPi.h>
 
-#define CNCStoppedValue 60
+// Alle waardes hierboven geven aan dat de CNC aan het bewegen is.
+#define CNCGestoptWaarde 60
 
 
-Frees::Frees(Vec3<double> Position, ADCMaster* ADCreader) : ADCreader(ADCreader)  //(1, &Frees::ADCValueProcessor, this)
+Frees::Frees(Vec3<double> Position, ADCMaster* ADClezer) : ADClezer(ADClezer)
 {
-	position = Position;
+	// Bewaar de meegegeven positie.
+	Pos = Position;
+	// Open de filestream om Gcode in op te slaan.
 	GcodeTracker.open("Gcode.tap");
 	if(!GcodeTracker.is_open()){
 		static_assert(true, "Error Opening Gcode.tap");
 	}
 
+	// Open een Seriele connectie met de CNC frees
 	if((SerialID = serialOpen("/dev/ttyUSB0", 115200)) < 0){
 		static_assert(true, "Unable to open ttyUSB0");
 	}
+	// Geef extra tijd aan de CNC om een reactie te sturen.
 	delay(500);
-	WaitForGRBLResponse();
+	WachtOpGRBLReactie();
+
 }
 
 Frees::~Frees()
@@ -26,25 +32,25 @@ Frees::~Frees()
 	serialClose(SerialID);
 }
 
-// electonic && Serial logic
-void Frees::CheckCNCMoving(){
-	double ADCValue = ADCreader->GetADCValue(ADCChannel);
+// elektonische && Seriele logica
+void Frees::LeesStepperMotors(){
+	double ADCWaarden = ADClezer->ADCWaarde(ADCChannel);
 	static unsigned int CNCStopChecks = 0;
-    if(ADCValue > CNCStoppedValue){
-        // reset values to 0
-        CNCmoving = 1.0;
+    if(ADCWaarden > CNCGestoptWaarde){
+        // reset CNCStopChecks naar 0
+        CNCbeweegt = true;
         CNCStopChecks = 0;
-		//std::cout << ADCValue << std::endl;
     }
     else
         CNCStopChecks++;
     if(CNCStopChecks > 10){
-        // CNC stopped for more than 10ms
-        CNCmoving = 0.0;
+        // CNC gestopt voor meer dan 50ms
+        CNCbeweegt = false;
     }
 }
 
-void Frees::WaitForGRBLResponse(){
+void Frees::WachtOpGRBLReactie(){
+	// print alle characters in de reactie stream
 	std::cout << "response: ";
 	int CharactersInSerialStream;
 	do{
@@ -59,41 +65,33 @@ void Frees::WaitForGRBLResponse(){
 	while(CharactersInSerialStream == 0);
 }
 
-// Gcode Senders
-void Frees::SendGCode(std::string gcode){
+void Frees::StuurGCode(std::string gcode){
 	GcodeTracker << gcode << std::endl;
-	// temporary untill we can send gcode to CNC
+	// Log de gestuurde Gcode
 	std::cout << "Gcode: " << gcode << std::endl;
 	
 	gcode += "\r\n";
 	serialPuts(SerialID, gcode.c_str());
 
-	WaitForGRBLResponse();
+	WachtOpGRBLReactie();
 
-	// wait for CNC to start moving
+	// Geef tijd om de CNC te laten bewegen
 	delay(200);
 	do{
-		CheckCNCMoving();
+		LeesStepperMotors();
 		delay(5);
 	}
-	while(CNCmoving);
+	while(CNCbeweegt);
 
-	delay(100); // be sure that the CNC is able to catch up to the next command
-	// char x;
-	// std::cin >> x;
+	// Geef tijd zodat de CNC het volgende commando kan opvolgen
+	delay(100);
 }
 
-void Frees::GiveHumanGcode(std::string gcode){
-	GcodeTracker << gcode << std::endl;
-	std::cout << "Gcode: " << gcode << std::endl << "Finished? "; 
-	std::cin.get();
-}
-
-// Instruction Parsers
-void Frees::_Move(Vec3<double> V){
+// Verwerkt de vector naar een Gcode string
+void Frees::_Beweeg(Vec3<double> V){
 	std::string Gcode;
 	Gcode += "G1";
-	if(Relative){
+	if(Relatief){
 		if(V.Y())
 			Gcode += "Y" + std::to_string(V.Y());
 		if(V.X())
@@ -106,31 +104,32 @@ void Frees::_Move(Vec3<double> V){
 			Gcode += "X" + std::to_string(V.X());
 			Gcode += "Z" + std::to_string(V.Z());
 	}
-	SendGCode(Gcode);
+	StuurGCode(Gcode);
 }
 
-void Frees::Move(Vec3<double> V){
-	if(!Relative){
-		SendGCode("G91");
-		Relative = 1;
+// Beweeg de frees relatief tot vorige positie
+void Frees::Beweeg(Vec3<double> V){
+	if(!Relatief){
+		StuurGCode("G91");
+		Relatief = 1;
 	}
-	_Move(V);
+	_Beweeg(V);
 	
-	position += V;
-	position.print();
+	Pos += V;
 }
 
-void Frees::MoveTo(Vec3<double> P){
-	if(Relative){
-		SendGCode("G90");
-		Relative = 0;
+// Beweeg de frees absoluut tot de nul positie
+void Frees::BeweegNaar(Vec3<double> P){
+	if(Relatief){
+		StuurGCode("G90");
+		Relatief = 0;
 	}
 
-	_Move(P);
+	_Beweeg(P);
 
-	position = P;
+	Pos = P;
 }
 
-const Vec3<double> Frees::GetPosition(){
-	return position;
+const Vec3<double> Frees::Positie(){
+	return Pos;
 }

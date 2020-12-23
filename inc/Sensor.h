@@ -5,36 +5,45 @@
 #include "ADCmanager.h"
 #include "Frees.h"
 
-#define SENSORPIN A0
-
+// Maximaal sensor verschil
 #define MaxLengthDiff   32.72
-#define PotAtRest      500.00
-#define PotAtFull     2047.00
-#define MaxPotDiff    (PotAtFull-PotAtRest)   // 773 @ full 219 @ rest => 773-219 = 554
-#define SensorMiddle    15.00
+// ADC waarde in rust
+#define PotInRust      500.00
+// ADC waarde wanneer maximaal ingedrukt
+#define PotIngedrukt  2047.00
+// Hoeveelheid dat de sensor maximaal naar beneden beweegt in 1 keer tijdens SensorLevel.
+#define SensorMidden    15.00
+// 2047 @ full 500 @ rest => 2047-500 = 1547
+#define MaxPotDiff    (PotIngedrukt-PotInRust)
 
 class Sensor
 {
 private:   
-    const double SensorLevelAim = 15.0; 
+    const double SensorLevelDoel = 15.0; 
     const float ADC2DIST_Fact = MaxLengthDiff / MaxPotDiff;
-    double SensorLeveledHeight;
-    double StartingHeightFromFreesTop = 0;
-    double RelativeHeight = 0;
+    double SensorLeveledHoogte;
+    double StartingHoogteTotCNCTop = 0;
+    double RelatieveHoogte = 0;
     
-    ADCMaster* ADCreader;
+    ADCMaster* ADClezer;
     const unsigned int ADCChannel = 1;
 
 
 public:    
-    Sensor(ADCMaster* ADCreader);
+    Sensor(ADCMaster* ADClezer);
     ~Sensor();
+    
+    // Lees hoeveel de sensor is ingedrukt.
+    double AbsoluteHoogteMeting();
+    // Lees de ADC waarde.
+    double ADCGemiddelde();
 
-    double GetDistance();
-    double GetADCAverage();
-
+    // Zet de sensor in het midden
     void LevelSensor(Frees& F);
-    double GetSensorDifference();
-    double MeasureHeight(double& difference);
+    
+    // Geeft het hoogte verschil ten opzichte van de gelevelde sensor waarde.
+    double SensorVerschil();
+    // Meet de relatieve hoogte ten opzichte van het eerste meet punt.
+    double RelatieveHoogteMeting(double& difference);
 
 };

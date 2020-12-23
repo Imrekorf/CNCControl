@@ -1,51 +1,48 @@
 #include "Sensor.h"
 
-Sensor::Sensor(ADCMaster* ADCreader) : ADCreader(ADCreader) //(0, &Sensor::ADCValueProcessor, this)
-{}
+Sensor::Sensor(ADCMaster* ADClezer) : ADClezer(ADClezer) {}
 
 Sensor::~Sensor() {}
 
-double Sensor::GetDistance(){
-	return (ADCreader->GetADCValue(ADCChannel) - PotAtRest) * ADC2DIST_Fact;
+double Sensor::AbsoluteHoogteMeting(){
+	return (ADClezer->ADCWaarde(ADCChannel) - PotInRust) * ADC2DIST_Fact;
 }
 
-double Sensor::GetADCAverage(){
-	return ADCreader->GetADCValue(ADCChannel);
+double Sensor::ADCGemiddelde(){
+	return ADClezer->ADCWaarde(ADCChannel);
 }
 
 void Sensor::LevelSensor(Frees& F){
-	double SensorValue;
+	// beweeg de sensor naar beneden totdat deze een waarde > 2 meet.
+	double SensorWaarde;
 	do{
-		F.Move({0, 0, -SensorMiddle});
-		SensorValue = GetDistance();
-		//std::cout << "PushedIn: " << SensorValue << std::endl;
-		StartingHeightFromFreesTop += SensorMiddle;
+		F.Beweeg({0, 0, -SensorMidden});
+		SensorWaarde = AbsoluteHoogteMeting();
+		StartingHoogteTotCNCTop += SensorMidden;
 	}
-	while(SensorValue < 2);
+	while(SensorWaarde < 2);
 
-	// move sensor head down to SensorLevelAim value
-	F.Move({0, 0, -1 * (SensorLevelAim - SensorValue)});
-	StartingHeightFromFreesTop += SensorLevelAim - SensorValue;
-
-	// debugging
-	//std::cout << "HeightToTop: " << StartingHeightFromFreesTop << std::endl;
-	SensorLeveledHeight = GetDistance();
+	// Beweeg de sensor verder naar beneden tot SensorLevelDoel
+	F.Beweeg({0, 0, -1 * (SensorLevelDoel - SensorWaarde)});
+	StartingHoogteTotCNCTop += SensorLevelDoel - SensorWaarde;
+	
+	// Bewaar de gelevelde SensorWaarde om later mee te vergelijken.
+	SensorLeveledHoogte = AbsoluteHoogteMeting();
 }
 
-double Sensor::GetSensorDifference(){
-	return GetDistance() - SensorLeveledHeight;
+double Sensor::SensorVerschil(){
+	return AbsoluteHoogteMeting() - SensorLeveledHoogte;
 }
 
-double Sensor::MeasureHeight(double& difference){
-	double Diff = GetSensorDifference();
-	// only write significant changes to heightmap
+double Sensor::RelatieveHoogteMeting(double& difference){
+	double Diff = SensorVerschil();
+	// Verwerk alleen groot genoege hoogte verschillen.
 	if(fabs(Diff) > 0.1){
-		// std::cout << "Difference: " << Diff << std::endl;
-		RelativeHeight += Diff;
+		RelatieveHoogte += Diff;
 		difference = Diff;
 	}
 	else{
 		difference = 0;
 	}
-	return RelativeHeight;
+	return RelatieveHoogte;
 }

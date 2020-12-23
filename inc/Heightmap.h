@@ -4,34 +4,34 @@
 #include <iostream>
 #include <fstream>
 
-#define Resolution .5
+#define ScanResolutie .5
 
-#define DistanceBetweenPointsmm	30.0
-#define	DistanceBetweenLinesmm	30.0
-#define ScanHeightmm			90.0
-#define ScanWidthmm				90.0
+#define AfstandTussenPuntenmm	30.0
+#define	AfstandTussenLijnenmm	30.0
+#define ScanHoogtemm			90.0
+#define ScanBreedtemm			90.0
 
 
-class Heightmap
+class Hoogtemap
 {
 public:
 	template<typename type>
-	class HeightMapArrayProxy {
+	class HoogtemapArrayProxy {
 		public:
-			class HeightMapValueProxy {
+			class HoogtemapValueProxy {
 				private:
-					type value = 0;
+					type waarde = 0;
 				public:
 					void operator=(const type& v){
-						value = v;
+						waarde = v;
 					}
 
-					friend std::ofstream& operator<<(std::ofstream& output, const HeightMapValueProxy &D){
-						output << D.value;
+					friend std::ofstream& operator<<(std::ofstream& output, const HoogtemapValueProxy &D){
+						output << D.waarde;
 						return output;
 					}
 
-					double operator-(const HeightMapValueProxy& HMVP){
+					double operator-(const HoogtemapValueProxy& HMVP){
 						return this->value - HMVP.value;
 					}
 					double operator-(const double& v){
@@ -41,27 +41,30 @@ public:
 					operator double() const { return value; }
 			};
 
-			HeightMapArrayProxy(HeightMapValueProxy* _array) : _array(_array) { }
+			HoogtemapArrayProxy(HoogtemapValueProxy* _array) : _array(_array) { }
 
-			HeightMapValueProxy& operator[](unsigned int index) {
+			HoogtemapValueProxy& operator[](unsigned int index) {
 				return _array[index];
 			}
 		
 		private:
-			HeightMapValueProxy* _array;
+			HoogtemapValueProxy* _array;
 	};
 
-	HeightMapArrayProxy<double> operator[](unsigned int index) {
-		return HeightMapArrayProxy<double>(matrix[index]);
+	HoogtemapArrayProxy<double> operator[](unsigned int index) {
+		return HoogtemapArrayProxy<double>(matrix[index]);
 	}
 
-	Heightmap(unsigned int height, unsigned int width);
-	~Heightmap();
+	// Maakt een hoogtemap aan.
+	Hoogtemap(unsigned int hoogte, unsigned int breedte);
+	~Hoogtemap();
 
-	void WriteHeightMap(std::string filename);
+	// Schrijft de hoogtemap naar bestand genaamd "filename.dat"
+	void SlaHoogtemapOp(std::string filename);
 
-	private:
-		HeightMapArrayProxy<double>::HeightMapValueProxy** matrix;
-		unsigned int height, width;
+private:
+	// bevat de gescande hoogtemap waardes
+	HoogtemapArrayProxy<double>::HoogtemapValueProxy** matrix;
+	unsigned int hoogte, breedte;
 
 };
