@@ -1,4 +1,5 @@
 #include "Sensor.h"
+#include "Frees.h"
 
 Sensor::Sensor(ADCMaster* ADClezer) : ADClezer(ADClezer) {}
 

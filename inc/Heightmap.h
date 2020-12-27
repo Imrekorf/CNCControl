@@ -4,16 +4,22 @@
 #include <iostream>
 #include <fstream>
 
-#define ScanResolutie .5
+#define SCHAAL 2
 
 #define AfstandTussenPuntenmm	30.0
-#define	AfstandTussenLijnenmm	30.0
-#define ScanHoogtemm			90.0
-#define ScanBreedtemm			90.0
+#define ScanGrotemm				90.0
 
+#define CONISCHEHOEK		    12
+#define STAPGROTE 		  		 0.5
 
 class Hoogtemap
 {
+private:
+	struct point {
+		double x;
+		double y;
+	};
+
 public:
 	template<typename type>
 	class HoogtemapArrayProxy {
@@ -26,7 +32,11 @@ public:
 						waarde = v;
 					}
 
-					friend std::ofstream& operator<<(std::ofstream& output, const HoogtemapValueProxy &D){
+					void operator=(const HoogtemapValueProxy& v){
+						waarde = v.waarde;
+					}
+
+					friend std::ofstream& operator<<(std::ofstream& output, const HoogtemapValueProxy& D){
 						output << D.waarde;
 						return output;
 					}
@@ -36,6 +46,10 @@ public:
 					}
 					double operator-(const double& v){
 						return this->value - v;
+					}
+
+					HoogtemapValueProxy& operator-=(const double& v){
+						return this->value -= v;
 					}
 
 					operator double() const { return value; }
@@ -56,15 +70,25 @@ public:
 	}
 
 	// Maakt een hoogtemap aan.
-	Hoogtemap(unsigned int hoogte, unsigned int breedte);
+	Hoogtemap(unsigned int MatrixGrote);
 	~Hoogtemap();
 
-	// Schrijft de hoogtemap naar bestand genaamd "filename.dat"
-	void SlaHoogtemapOp(std::string filename);
+	void MaakConischGat(double Radius, double ConischeHoek = CONISCHEHOEK, double StapGrote = STAPGROTE);
+
+	unsigned int GetMatrixGrote(){return MatrixGrote;}
 
 private:
 	// bevat de gescande hoogtemap waardes
 	HoogtemapArrayProxy<double>::HoogtemapValueProxy** matrix;
-	unsigned int hoogte, breedte;
+	unsigned int MatrixGrote;
 
+	// berekend of punt binnen de Frees cirkel valt
+	bool IsInCirkel(point P, point C, double R);
+
+	// interpoleert scanpunten
+	void InterpoleerHoogtemap();
+	// verkleint de hoogtemap tot grote: radius
+	void VerkleinHoogtemap(point MiddelPunt, double Radius, double& Hoogstepunt);
+	// Maakt conisch gat in de hoogtemap
+	void initCirkel(point C, double Radius, double StapGrote = STAPGROTE);
 };

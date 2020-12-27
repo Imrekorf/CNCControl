@@ -3,7 +3,6 @@
 #include <iostream>
 
 #include "ADCmanager.h"
-#include "Frees.h"
 
 // Maximaal sensor verschil
 #define MaxLengthDiff   32.72
@@ -15,6 +14,8 @@
 #define SensorMidden    15.00
 // 2047 @ full 500 @ rest => 2047-500 = 1547
 #define MaxPotDiff    (PotIngedrukt-PotInRust)
+
+class Frees;
 
 class Sensor
 {
