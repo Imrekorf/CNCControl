@@ -3,9 +3,14 @@
 #include <cmath>
 #include <fstream>
 
-// SCHAAL is de vergrotings factor van de hoogtemap | 300mmx300mm : 600x600 
+#ifndef M_PI
 #define M_PI 3.14159
+#endif
+// SCHAAL is de vergrotings factor van de hoogtemap | 300mmx300mm : 600x600 
+#ifndef SCHAAL
 #define SCHAAL			  2
+#endif
+
 #define BITOVERLAP		  1
 #define BITGROTE		  6
 #define SPIRAALHOEK		 15
@@ -13,14 +18,14 @@
 class Hoogtemap;
 class ADCMaster;
 
+struct point {
+	double x;
+	double y;
+};
+
 class GcodeManager
 {
 private:
-	struct point {
-		double x;
-		double y;
-	};
-
 	// bereken volgend punt op de spiraal
 	point GetNextPoint(point& P, float a, float b, float& Hoek, float R, int& teller);
 
@@ -46,5 +51,5 @@ public:
 	// Stuurt Gcode naar de Frees, Verlaat de functie pas wanneer Frees stilstaat.
 	void StuurGCode(std::string Gcode);
 
-	void GenerateGcode(Hoogtemap matrix, double hoogstepunt, float BitGrote = BITGROTE, float Hoek = SPIRAALHOEK)
+	void GenerateGcode(Hoogtemap matrix, double hoogstepunt, float BitGrote = BITGROTE, float Hoek = SPIRAALHOEK);
 };

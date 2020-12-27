@@ -4,7 +4,9 @@
 #include <iostream>
 #include <fstream>
 
+#ifndef SCHAAL
 #define SCHAAL 2
+#endif
 
 #define AfstandTussenPuntenmm	30.0
 #define ScanGrotemm				90.0
@@ -42,17 +44,18 @@ public:
 					}
 
 					double operator-(const HoogtemapValueProxy& HMVP){
-						return this->value - HMVP.value;
+						return this->waarde - HMVP.value;
 					}
 					double operator-(const double& v){
-						return this->value - v;
+						return this->waarde - v;
 					}
 
 					HoogtemapValueProxy& operator-=(const double& v){
-						return this->value -= v;
+						this->waarde -= v;
+						return *this;
 					}
 
-					operator double() const { return value; }
+					operator double() const { return waarde; }
 			};
 
 			HoogtemapArrayProxy(HoogtemapValueProxy* _array) : _array(_array) { }
@@ -73,7 +76,7 @@ public:
 	Hoogtemap(unsigned int MatrixGrote);
 	~Hoogtemap();
 
-	void MaakConischGat(double Radius, double ConischeHoek = CONISCHEHOEK, double StapGrote = STAPGROTE);
+	double MaakConischGat(double Radius, double ConischeHoek = CONISCHEHOEK, double StapGrote = STAPGROTE);
 
 	unsigned int GetMatrixGrote(){return MatrixGrote;}
 

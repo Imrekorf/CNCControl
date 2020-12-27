@@ -125,7 +125,7 @@ point GcodeManager::GetNextPoint(point& P, float a, float b, float& Hoek, float 
 	return P;
 }
 
-void GcodeManager::GenerateGcode(Hoogtmap matrix, float BitGrote, float Hoek, double hoogstepunt){
+void GcodeManager::GenerateGcode(Hoogtemap matrix, double hoogstepunt, float BitGrote, float Hoek){
 	// Diameter
 	BitGrote -= BITOVERLAP;
 	float FreesDiameter = matrix.GetMatrixGrote() / SCHAAL - BitGrote;
@@ -159,7 +159,7 @@ void GcodeManager::GenerateGcode(Hoogtmap matrix, float BitGrote, float Hoek, do
 						"G1 "};
 	
 	// radius van de spiraal in .5mm
-	int Radius = MatrixGrote / 2;
+	int Radius = matrix.GetMatrixGrote() / 2;
 
 	// Houdt de positie op de spiraal bij
 	point Point({0, 0});
@@ -170,10 +170,10 @@ void GcodeManager::GenerateGcode(Hoogtmap matrix, float BitGrote, float Hoek, do
 		// van de eerste loop nadat GetNextPoint aangeroepen is.
 		if(FirstLoop){
 			// Beweeg de freeskop boven de eerste gcode instructie
-			Gcode.insert("X" + std::to_string(Point.x / SCHAAL) + 
+			Gcode.push_back("X" + std::to_string(Point.x / SCHAAL) + 
 				 	 "Y" + std::to_string(Point.y / SCHAAL) + 
 				 	 "Z" + std::to_string(0.0));
-			Gcode.insert("F1000"); 
+			Gcode.push_back("F1000"); 
 			FirstLoop = false;
 		}
 		
@@ -181,18 +181,18 @@ void GcodeManager::GenerateGcode(Hoogtmap matrix, float BitGrote, float Hoek, do
 		double ZHeight = matrix[(int)(Point.y + Radius)][(int)(Point.x + Radius)] - hoogstepunt;
 		
 		// Beweeg de freeskop naar positie:
-		Gcode.insert("X" + std::to_string(Point.x / SCHAAL) + 
+		Gcode.push_back("X" + std::to_string(Point.x / SCHAAL) + 
 				 "Y" + std::to_string(Point.y / SCHAAL) + 
 				 "Z" + std::to_string(ZHeight)); 
 	}
 
 	// Gcode tail
-	Gcode.insert("M9");
-	Gcode.insert("G28 G91 Z0.");
-	Gcode.insert("G90");
-	Gcode.insert("G28 G91 X0. Y0. ");
-	Gcode.insert("G90");
-	Gcode.insert("M30");
+	Gcode.push_back("M9");
+	Gcode.push_back("G28 G91 Z0.");
+	Gcode.push_back("G90");
+	Gcode.push_back("G28 G91 X0. Y0. ");
+	Gcode.push_back("G90");
+	Gcode.push_back("M30");
 	
 	// leeg Frees.tap
 	std::ofstream ClearFile;

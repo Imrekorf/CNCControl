@@ -4,9 +4,7 @@
 #include <iostream>
 
 #include "GcodeManager.h"
-
-template<typename T>
-class Vec3;
+#include "Vec3.h"
 
 class Frees
 {

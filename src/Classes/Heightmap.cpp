@@ -1,7 +1,9 @@
 #include "Heightmap.h"
 #include "Vec3.h"
 
+#ifndef M_PI
 #define M_PI 3.14159
+#endif
 #define degreesToRadians(angleDegrees) ((angleDegrees) * M_PI / 180.0)
 #define radiansToDegrees(angleRadians) ((angleRadians) * 180.0 / M_PI)
 
@@ -74,7 +76,7 @@ void Hoogtemap::InterpoleerHoogtemap(){
 
 void Hoogtemap::VerkleinHoogtemap(point MiddelPunt, double Radius, double& Hoogstepunt){
 	HoogtemapArrayProxy<double>::HoogtemapValueProxy** KleineHoogtemap = new HoogtemapArrayProxy<double>::HoogtemapValueProxy*[(int)(Radius * SCHAAL)];
-	for (unsigned int i = 0; i < (int)(Radius * 2); i++)
+	for (unsigned int i = 0; i < (unsigned int)(Radius * 2); i++)
 	{
 		KleineHoogtemap[i] = new HoogtemapArrayProxy<double>::HoogtemapValueProxy[(int)(Radius * 2)];
 	}
@@ -117,14 +119,14 @@ void Hoogtemap::initCirkel(point C, double Radius, double StapGrote){
 	}
 }
 
-void Hoogtemap::MaakConischGat(double Radius, double ConischeHoek, double StapGrote){
+double Hoogtemap::MaakConischGat(double Radius, double ConischeHoek, double StapGrote){
 	InterpoleerHoogtemap();
 
 	point MiddelPunt = {(double)(MatrixGrote/2), (double)(MatrixGrote/2)};
 	double Hoogstepunt = -20000; // lage waarde zodat er altijd een hogere waarde kan worden gevonden in de hoogtemap.
 	VerkleinHoogtemap(MiddelPunt, Radius * SCHAAL, Hoogstepunt);
 
-	point MiddelPunt = {(double)(MatrixGrote/2), (double)(MatrixGrote/2)};
+	MiddelPunt = {(double)(MatrixGrote/2), (double)(MatrixGrote/2)};
 	
 	double ConischeDiepte = std::tan(degreesToRadians(ConischeHoek)) * Radius;
 
@@ -132,4 +134,6 @@ void Hoogtemap::MaakConischGat(double Radius, double ConischeHoek, double StapGr
 		float newradius = (ConischeDiepte-StapGrote*i)/std::tan(degreesToRadians(ConischeHoek));
 		initCirkel(MiddelPunt, (double)newradius * SCHAAL, StapGrote);
 	}
+	
+	return Hoogstepunt;
 }

@@ -1,5 +1,4 @@
 #include "Frees.h"
-#include "Vec3.h"
 
 Frees::Frees(Vec3<double> Position, GcodeManager* Gman) : Gman(Gman)
 {

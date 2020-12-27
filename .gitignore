@@ -13,5 +13,6 @@ build/debug/Classes/struct.o
 build/debug/ads1015/Adafruit_ADS1015.d
 build/debug/ads1015/Adafruit_ADS1015.o
 bin/debug/main
+build/*
 heightmap.dat
 main

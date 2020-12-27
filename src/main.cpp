@@ -8,6 +8,11 @@
 #include "Frees.h"
 #include "Vec3.h"
 
+#define RADIUS			 	75
+#define CONISCHEHOEK		12
+#define STAPGROTE			 0.5
+#define BITGROTE			 6
+#define SPIRAALHOEK			15
 
 int main(int argc, char** argv)
 {	
@@ -34,7 +39,7 @@ int main(int argc, char** argv)
 	delay(15);
 
 	// Zet de Freessnelheid op 800mm per minuut
-	F.StuurGCode("F800");
+	Gman.StuurGCode("F800");
 
 	// Zet de sensor op 15mm
 	S.LevelSensor(F);
@@ -58,16 +63,16 @@ int main(int argc, char** argv)
 		// Beweeg naar de volgende lijn, en punt als deze er is.
 		double Zhoogte = F.Positie().Z();
 		F.Beweeg({0, 0, -1 * Zhoogte});
-		if(i+1 < ScanLijnen){
+		if(i+1 < PuntenPerLijn){
 			F.Beweeg({AfstandTussenPuntenmm, 0, 0});
 			F.Beweeg({0, 0, Zhoogte + SensorVerschil});
 		}
 	}
 
 	// Sla de hoogtemap op.
-	heightmap.MaakConischGat;
+	double Hoogstepunt = heightmap.MaakConischGat(RADIUS, CONISCHEHOEK, STAPGROTE);
 
-	Gman.GenerateGcode();
+	Gman.GenerateGcode(heightmap, Hoogstepunt, BITGROTE, SPIRAALHOEK);
 	std::cout << "job's done" << std::endl;
 
 	return 0;
