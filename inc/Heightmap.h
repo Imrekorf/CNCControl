@@ -3,6 +3,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include "Vec3.h"
 
 #ifndef SCHAAL
 #define SCHAAL 2
@@ -16,12 +17,6 @@
 
 class Hoogtemap
 {
-private:
-	struct point {
-		double x;
-		double y;
-	};
-
 public:
 	template<typename type>
 	class HoogtemapArrayProxy {
@@ -86,12 +81,12 @@ private:
 	unsigned int MatrixGrote;
 
 	// berekend of punt binnen de Frees cirkel valt
-	bool IsInCirkel(point P, point C, double R);
+	bool IsInCirkel(Vec3<double> P, Vec3<double> C, double R);
 
 	// interpoleert scanpunten
 	void InterpoleerHoogtemap();
 	// verkleint de hoogtemap tot grote: radius
-	void VerkleinHoogtemap(point MiddelPunt, double Radius, double& Hoogstepunt);
+	void VerkleinHoogtemap(Vec3<double> MiddelPunt, double Radius, double& Hoogstepunt);
 	// Maakt conisch gat in de hoogtemap
-	void initCirkel(point C, double Radius, double StapGrote = STAPGROTE);
+	void initCirkel(Vec3<double> C, double Radius, double StapGrote = STAPGROTE);
 };

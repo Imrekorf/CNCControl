@@ -90,7 +90,7 @@ void GcodeManager::StuurGCode(std::string gcode){
 }
 
 // spiraal logica
-point GcodeManager::GetNextPoint(point& P, float a, float b, float& Hoek, float R, int& teller){
+Vec3<double> GcodeManager::GetNextPoint(Vec3<double>& P, float a, float b, float& Hoek, float R, int& teller){
 	// X, Y, XN en YN worden gebruikt om bij te houden of de spiraal positie veranderd is of niet
 	static float X = 0, Y = 0;
 	static float XN = 0, YN = 0;
@@ -120,8 +120,8 @@ point GcodeManager::GetNextPoint(point& P, float a, float b, float& Hoek, float 
 		XN = 0; YN = 0;
 	}
 	// retour het nieuw berekende punt.
-	P.x = (int)XN;
-	P.y = (int)YN;
+	P.X((int)XN);
+	P.Y((int)YN);
 	return P;
 }
 
@@ -162,7 +162,7 @@ void GcodeManager::GenerateGcode(Hoogtemap matrix, double hoogstepunt, float Bit
 	int Radius = matrix.GetMatrixGrote() / 2;
 
 	// Houdt de positie op de spiraal bij
-	point Point({0, 0});
+	Vec3<double> Point({0, 0, 0});
 	bool FirstLoop = true;
 	for(int i = MaxPoints-1; i >= 0; i--){
 		Point = GetNextPoint(Point, a, b, Hoek, rc, i);
@@ -170,20 +170,20 @@ void GcodeManager::GenerateGcode(Hoogtemap matrix, double hoogstepunt, float Bit
 		// van de eerste loop nadat GetNextPoint aangeroepen is.
 		if(FirstLoop){
 			// Beweeg de freeskop boven de eerste gcode instructie
-			Gcode.push_back("X" + std::to_string(Point.x / SCHAAL) + 
-				 	 "Y" + std::to_string(Point.y / SCHAAL) + 
+			Gcode.push_back("X" + std::to_string(Point.X() / SCHAAL) + 
+				 	 "Y" + std::to_string(Point.Y() / SCHAAL) + 
 				 	 "Z" + std::to_string(0.0));
 			Gcode.push_back("F1000"); 
 			FirstLoop = false;
 		}
 		
 		// haal de freesdiepte uit de hoogtemap op. Haal hier het hoogstepunt waarde vanaf om de hoogtemap waarde negatief te maken.
-		double ZHeight = matrix[(int)(Point.y + Radius)][(int)(Point.x + Radius)] - hoogstepunt;
+		Point.Z(matrix[(int)(Point.Y() + Radius)][(int)(Point.X() + Radius)] - hoogstepunt);
 		
 		// Beweeg de freeskop naar positie:
-		Gcode.push_back("X" + std::to_string(Point.x / SCHAAL) + 
-				 "Y" + std::to_string(Point.y / SCHAAL) + 
-				 "Z" + std::to_string(ZHeight)); 
+		Gcode.push_back("X" + std::to_string(Point.X() / SCHAAL) + 
+				 "Y" + std::to_string(Point.Y() / SCHAAL) + 
+				 "Z" + std::to_string(Point.Z())); 
 	}
 
 	// Gcode tail

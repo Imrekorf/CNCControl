@@ -74,19 +74,19 @@ void Hoogtemap::InterpoleerHoogtemap(){
 	}
 }
 
-void Hoogtemap::VerkleinHoogtemap(point MiddelPunt, double Radius, double& Hoogstepunt){
+void Hoogtemap::VerkleinHoogtemap(Vec3<double> MiddelPunt, double Radius, double& Hoogstepunt){
 	HoogtemapArrayProxy<double>::HoogtemapValueProxy** KleineHoogtemap = new HoogtemapArrayProxy<double>::HoogtemapValueProxy*[(int)(Radius * SCHAAL)];
 	for (unsigned int i = 0; i < (unsigned int)(Radius * 2); i++)
 	{
 		KleineHoogtemap[i] = new HoogtemapArrayProxy<double>::HoogtemapValueProxy[(int)(Radius * 2)];
 	}
 	
-	for(unsigned int y = (MiddelPunt.y - Radius); y < MiddelPunt.y + Radius; y++){
-		for(unsigned int x = (MiddelPunt.x - Radius); x < (MiddelPunt.x + Radius); x++){
+	for(unsigned int y = (MiddelPunt.Y() - Radius); y < MiddelPunt.Y() + Radius; y++){
+		for(unsigned int x = (MiddelPunt.X() - Radius); x < (MiddelPunt.X() + Radius); x++){
 			if(matrix[y][x] > Hoogstepunt){
 				Hoogstepunt = matrix[y][x];
 			}
-			KleineHoogtemap[y-(unsigned int)(MiddelPunt.y - Radius)][x-(unsigned int)(MiddelPunt.x - Radius)] = matrix[y][x];
+			KleineHoogtemap[y-(unsigned int)(MiddelPunt.Y() - Radius)][x-(unsigned int)(MiddelPunt.X() - Radius)] = matrix[y][x];
 		}
 	}
 
@@ -101,17 +101,17 @@ void Hoogtemap::VerkleinHoogtemap(point MiddelPunt, double Radius, double& Hoogs
 	MatrixGrote = Radius * 2;
 }
 
-bool Hoogtemap::IsInCirkel(point P, point C, double R){
-	double dx = C.x - P.x;
-	double dy = C.y - P.y;
+bool Hoogtemap::IsInCirkel(Vec3<double> P, Vec3<double> C, double R){
+	double dx = C.X() - P.X();
+	double dy = C.Y() - P.Y();
 	return (dx*dx + dy*dy) <= (R*R);
 }
 
-void Hoogtemap::initCirkel(point C, double Radius, double StapGrote){
-	point P = {0, 0};
+void Hoogtemap::initCirkel(Vec3<double> C, double Radius, double StapGrote){
+	Vec3<double> P = {0, 0, 0};
 	for(unsigned int y = 0; y < MatrixGrote; y++){
 		for(unsigned int x = 0; x < MatrixGrote; x++){
-			P = {(float)x, (float)y};
+			P = {(float)x, (float)y, 0};
 			if(IsInCirkel(P, C, Radius)){
 				matrix[y][x] -= StapGrote;
 			}
@@ -122,11 +122,11 @@ void Hoogtemap::initCirkel(point C, double Radius, double StapGrote){
 double Hoogtemap::MaakConischGat(double Radius, double ConischeHoek, double StapGrote){
 	InterpoleerHoogtemap();
 
-	point MiddelPunt = {(double)(MatrixGrote/2), (double)(MatrixGrote/2)};
+	Vec3<double> MiddelPunt = {(double)(MatrixGrote/2), (double)(MatrixGrote/2), 0};
 	double Hoogstepunt = -20000; // lage waarde zodat er altijd een hogere waarde kan worden gevonden in de hoogtemap.
 	VerkleinHoogtemap(MiddelPunt, Radius * SCHAAL, Hoogstepunt);
 
-	MiddelPunt = {(double)(MatrixGrote/2), (double)(MatrixGrote/2)};
+	MiddelPunt = {(double)(MatrixGrote/2), (double)(MatrixGrote/2), 0};
 	
 	double ConischeDiepte = std::tan(degreesToRadians(ConischeHoek)) * Radius;
 

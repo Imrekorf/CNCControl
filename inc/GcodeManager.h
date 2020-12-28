@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <fstream>
+#include "Vec3.h"
 
 #ifndef M_PI
 #define M_PI 3.14159
@@ -18,16 +19,11 @@
 class Hoogtemap;
 class ADCMaster;
 
-struct point {
-	double x;
-	double y;
-};
-
 class GcodeManager
 {
 private:
 	// bereken volgend punt op de spiraal
-	point GetNextPoint(point& P, float a, float b, float& Hoek, float R, int& teller);
+	Vec3<double> GetNextPoint(Vec3<double>& P, float a, float b, float& Hoek, float R, int& teller);
 
 	// Wacht totdat de CNC frees een reactie op het vorige commando heeft gegeven.
 	void WachtOpGRBLReactie();
