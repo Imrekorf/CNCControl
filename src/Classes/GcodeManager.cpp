@@ -71,9 +71,8 @@ void GcodeManager::StuurGCode(std::string gcode){
 	GcodeTracker << gcode << std::endl;
 	// Log de gestuurde Gcode
 	std::cout << "Gcode: " << gcode << std::endl;
-	std::cin.ignore();
+	//std::cin.ignore();	// wacht op user input
 
-	/*
 	gcode += "\r\n";
 	serialPuts(SerialID, gcode.c_str());
 
@@ -89,7 +88,6 @@ void GcodeManager::StuurGCode(std::string gcode){
 
 	// Geef tijd zodat de CNC het volgende commando kan opvolgen
 	delay(100);
-	*/
 }
 
 // spiraal logica
