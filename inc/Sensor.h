@@ -6,9 +6,9 @@
 #include "Frees.h"
 
 // Maximaal sensor verschil
-#define MaxLengthDiff   32.72
+#define MaxLengthDiff   27.59
 // ADC waarde in rust
-#define PotInRust      500.00
+#define PotInRust      503.00
 // ADC waarde wanneer maximaal ingedrukt
 #define PotIngedrukt  2047.00
 // Hoeveelheid dat de sensor maximaal naar beneden beweegt in 1 keer tijdens SensorLevel.
