@@ -17,7 +17,7 @@
 int main(int argc, char** argv)
 {	
 	// Bereken de benodigde punten voor de hoogtemap matrix
-	unsigned int PuntenPerLijn = ScanGrotemm / AfstandTussenPuntenmm + 1;
+	unsigned int PuntenPerLijn = ScanGrotemm / AfstandTussenPuntenmm + 1;	// 4
 
 	// initialiseer WiringPI library
 	if(wiringPiSetup() == -1){
@@ -33,7 +33,10 @@ int main(int argc, char** argv)
 	Sensor S(&ADClezer);
 	Frees F({0, 0, 0}, &Gman);
 	// Creëer Hoogtemap object
-	Hoogtemap heightmap(ScanGrotemm * SCHAAL);
+	Hoogtemap heightmap(ScanGrotemm * SCHAAL + 1, PuntenPerLijn);	// 180 x 180
+	// first  point =   0 - 60
+	// second point =  60 - 120
+	// third  point = 120 - 180
 
 	// Wees er zeker van dat alle objecten zijn aangemaakt en dat WiringPi is ge-instantieerd.
 	delay(15);
@@ -52,13 +55,12 @@ int main(int argc, char** argv)
 		double SensorVerschil = 0;
 		for(;i % 2 ? j > 0 : j < PuntenPerLijn - 1; j += toename){
 			// Meet de hoogte en sla deze op.
-			heightmap[i * ScanGrotemm * SCHAAL][j * ScanGrotemm * SCHAAL] = S.RelatieveHoogteMeting(SensorVerschil);
-
+			heightmap[i * AfstandTussenPuntenmm * SCHAAL][j * AfstandTussenPuntenmm * SCHAAL] = S.RelatieveHoogteMeting(SensorVerschil);
 			// Beweeg de Frees kop naar het volgende punt, houdt rekening met het sensorverschil.
 			F.Beweeg({0, (double)toename * AfstandTussenPuntenmm, SensorVerschil});
 		}
 		// Meet laatste punt van de lijn.
-		heightmap[i][j] = S.RelatieveHoogteMeting(SensorVerschil);
+		heightmap[i * AfstandTussenPuntenmm  * SCHAAL][j * AfstandTussenPuntenmm * SCHAAL] = S.RelatieveHoogteMeting(SensorVerschil);
 
 		// Beweeg naar de volgende lijn, en punt als deze er is.
 		double Zhoogte = F.Positie().Z();
@@ -69,7 +71,6 @@ int main(int argc, char** argv)
 		}
 	}
 
-	// Sla de hoogtemap op.
 	double Hoogstepunt = heightmap.MaakConischGat(RADIUS, CONISCHEHOEK, STAPGROTE);
 
 	Gman.GenerateGcode(heightmap, Hoogstepunt, BITGROTE, SPIRAALHOEK);

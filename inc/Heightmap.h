@@ -68,23 +68,26 @@ public:
 	}
 
 	// Maakt een hoogtemap aan.
-	Hoogtemap(unsigned int MatrixGrote);
+	Hoogtemap(unsigned int MatrixGrote, unsigned int PuntenPerLijn);
 	~Hoogtemap();
 
 	double MaakConischGat(double Radius, double ConischeHoek = CONISCHEHOEK, double StapGrote = STAPGROTE);
 
 	unsigned int GetMatrixGrote(){return MatrixGrote;}
 
+	// interpoleert scanpunten
+	void InterpoleerHoogtemap();
+
 private:
 	// bevat de gescande hoogtemap waardes
 	HoogtemapArrayProxy<double>::HoogtemapValueProxy** matrix;
 	unsigned int MatrixGrote;
-
+	unsigned int PuntenPerLijn;
+	
 	// berekend of punt binnen de Frees cirkel valt
 	bool IsInCirkel(Vec3<double> P, Vec3<double> C, double R);
 
-	// interpoleert scanpunten
-	void InterpoleerHoogtemap();
+	
 	// verkleint de hoogtemap tot grote: radius
 	void VerkleinHoogtemap(Vec3<double> MiddelPunt, double Radius, double& Hoogstepunt);
 	// Maakt conisch gat in de hoogtemap

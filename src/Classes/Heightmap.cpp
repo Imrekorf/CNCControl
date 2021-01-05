@@ -24,9 +24,10 @@ struct Lijn{
 };
 
 
-Hoogtemap::Hoogtemap(unsigned int MatrixGrote)
+Hoogtemap::Hoogtemap(unsigned int MatrixGrote, unsigned int PuntenPerLijn)
 {
 	this->MatrixGrote = MatrixGrote;
+	this->PuntenPerLijn = PuntenPerLijn;
 	// Maak de matrix aan die de waarde van de hoogtemap bijhoudt aan.
 	matrix = new HoogtemapArrayProxy<double>::HoogtemapValueProxy*[MatrixGrote];
 	for(unsigned int j = 0; j < MatrixGrote; j++){
@@ -45,26 +46,26 @@ Hoogtemap::~Hoogtemap()
 
 void Hoogtemap::InterpoleerHoogtemap(){	
 	// write data to file and free heightmapmatrix memory
-	for(unsigned int i = 0; i < MatrixGrote-1; i++){
-		for(unsigned int j = 0; j < MatrixGrote-1; j++){
+	for(unsigned int i = 0; i < PuntenPerLijn-1; i++){
+		for(unsigned int j = 0; j < PuntenPerLijn-1; j++){
 			// Verticaal Links
 			Lijn HL(
-				{AfstandTussenPuntenmm*i, matrix[(int)(i * ScanGrotemm * SCHAAL)][(int)(j * ScanGrotemm * SCHAAL)], 0}, 
-				{AfstandTussenPuntenmm*(i+1), matrix[(int)((i+1) * ScanGrotemm * SCHAAL)][(int)(j * ScanGrotemm * SCHAAL)], 0}
+				{AfstandTussenPuntenmm*i, matrix[(int)(i * AfstandTussenPuntenmm * SCHAAL)][(int)(j * AfstandTussenPuntenmm * SCHAAL)], 0}, 
+				{AfstandTussenPuntenmm*(i+1), matrix[(int)((i+1) * AfstandTussenPuntenmm * SCHAAL)][(int)(j * AfstandTussenPuntenmm * SCHAAL)], 0}
 			);
 			// Verticaal Rechts
 			Lijn HR(
-				{AfstandTussenPuntenmm*i, matrix[(int)(i * ScanGrotemm * SCHAAL)][(int)((j+1) * ScanGrotemm * SCHAAL)], 0}, 
-				{AfstandTussenPuntenmm*(i+1), matrix[(int)((i+1) * ScanGrotemm * SCHAAL)][(int)((j+1) * ScanGrotemm * SCHAAL)], 0}
+				{AfstandTussenPuntenmm*i, matrix[(int)(i * AfstandTussenPuntenmm * SCHAAL)][(int)((j+1) * AfstandTussenPuntenmm * SCHAAL)], 0}, 
+				{AfstandTussenPuntenmm*(i+1), matrix[(int)((i+1) * AfstandTussenPuntenmm * SCHAAL)][(int)((j+1) * AfstandTussenPuntenmm * SCHAAL)], 0}
 			);
 			// maak een lijn tussen Verticaal Links en Verticaal. 
-			for(double k = 0; k < AfstandTussenPuntenmm; k+=(1/SCHAAL)){
+			for(double k = 0; k < AfstandTussenPuntenmm; k+=(1.0/SCHAAL)){
 				Lijn W(
 					{AfstandTussenPuntenmm*j, HL.F(k + i * AfstandTussenPuntenmm), 0}, 
 					{AfstandTussenPuntenmm*(j+1), HR.F(k + i * AfstandTussenPuntenmm), 0}
 				);
 				// bereken de punten over de horizontale lijn.
-				for(double l = 0; l < AfstandTussenPuntenmm; l+=(1/SCHAAL)){
+				for(double l = 0; l < AfstandTussenPuntenmm; l+=(1.0/SCHAAL)){
 					unsigned int i_height = i*(AfstandTussenPuntenmm * SCHAAL) + (k * SCHAAL);
 					unsigned int i_width = j*(AfstandTussenPuntenmm * SCHAAL) + (l * SCHAAL);
 					matrix[i_height][i_width] = W.F(l + j * AfstandTussenPuntenmm);

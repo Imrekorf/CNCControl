@@ -86,7 +86,7 @@ public:
 	}
 
 
-	void print(){
+	void print() const{ 
 		std::cout << "x: " << x << " y: " << y << " z: " << z << std::endl;
 	}
 

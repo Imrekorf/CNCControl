@@ -22,6 +22,8 @@ void Sensor::LevelSensor(Frees& F){
 		StartingHoogteTotCNCTop += SensorMidden;
 	}
 	while(SensorWaarde < 2);
+	
+	std::cout << "SensorValue: " << AbsoluteHoogteMeting() << std::endl;
 
 	// Beweeg de sensor verder naar beneden tot SensorLevelDoel
 	F.Beweeg({0, 0, -1 * (SensorLevelDoel - SensorWaarde)});
